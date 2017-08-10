@@ -1,0 +1,131 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="description" content="Tree View Component">
+        <meta name="keywords" content="HTML,CSS,JavaScript,AngularJS,Bootstrap">
+        <meta name="author" content="Felipe Moysés">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <!-- Optional theme -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">
+        <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.css">
+    </head>
+    <body ng-app="myApp" ng-controller="myCtrl">
+        <div class="container">
+            <div class="jumbotron">
+                <p class="text-center">Centro de Custo</p>
+            </div>
+            <div class="row">
+                {{arvore}}
+            </div>
+            <div class="row">
+                <div class="col-md-2 col-md-offset-5">
+                    <button type="button" class="btn btn-primary" ng-click="adicionarArvore()">
+                        Nova árvore
+                    </button>
+                    <script type="text/ng-template" id="categoryTree">
+                        {{ node.title }}
+                        <div class="container" style="width:300px">
+                            <div class="col-md-5">
+                                <button type="button" class="btn btn-secondary" ng-click="addBrotherNode($index,node)">
+                                <!-- ng-click="adicionarNoIrmao(node)">-->
+                                    Nó irmão
+                                </button>
+                            </div>
+                            <div class="col-md-5">
+                                <button type="button" class="btn btn-secondary" ng-click="adicionarNoFilho($index, node);">
+                                    Nó filho
+                                </button>
+                            </div>
+                        </div>
+                        <ul ng-if="node.nodes">
+                            <li ng-repeat="node in node.nodes" ng-include="'categoryTree'"></li>
+                        </ul>
+                    </script>
+                    <ul>
+                        <li ng-repeat="node in arvore" ng-include="'categoryTree'"></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </body>
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.5/angular.min.js"></script>
+    <!-- Latest compiled JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script>
+        
+        var app = angular.module('myApp',[]);
+        app.controller("myCtrl",["$scope","$filter",function($scope, $filter) {
+            $scope.mostra = false;
+            $scope.arvore = [];
+            var idArvore  = Math.floor((Math.random() * 9999) + 1);
+            var idNo      = Math.floor((Math.random() * 9999) + 1);
+          
+            $scope.adicionarNoIrmao = function(index, node) {
+                /*
+                Lógica para adicionar irmão:
+                Nada de For Each, vou precisar usar 
+                  Com o param node, pego o id do nó atual(arvore.filter(i => i.id === id))  
+                  itero sobre a árvore, a cada iteação salvo o ID numa variável tmp
+                  se eu chegar no ID do nó atual, já "sei" que o id salvo na variável tmp é o nó "pai", o id anterior
+                  arvore.filter(i => i.id === idPai) e adiciono um nó que será irmão
+                */
+                //arvore.filter(i => i.id === 764)
+               /* angular.forEach($scope.arvore,function(element) {
+                    element.node
+                });*/
+                var idTmpNoIrmao = Math.floor((Math.random() * 9999) + 1);
+                $scope.arvore[index].nodes.push({id : idTmpNoIrmao,parent : node.id, title : "Nó "+idTmpNoIrmao, nodes : []});
+            }
+            $scope.addBrotherNode = function(index, node) {
+                //there's a major issue, I think I need to save as an element of my object, the level where my node dwell
+                // Even though I'm using the very handy .filter w/ arrow function, it isn't going deeper enough all by itself...
+                //So, I'm back in that situation where I need to use a recursive method and keep the level of my tree
+
+                //I'll need a random id anyway
+                var idRandBrother = Math.floor((Math.random() * 9999) + 1);
+                //#1 check if the father is the tree itself
+                if(node.parent != undefined) {
+                    var arv = $scope.arvore[0].nodes;
+                    // broken when it gets in the 
+                    var myParent = arv.find(i => i.id === node.parent);
+                    if(myParent != undefined) {
+                        myParent.nodes.push({id : idRandBrother,parent : node.parent, title : "Nó "+idRandBrother, nodes : []});
+                        return;
+                    }
+                }
+                //it won't need any special treatment
+                $scope.arvore[0].nodes.push({id : idRandBrother,parent : node.id, title : "Nó "+idRandBrother, nodes : []});
+            }
+            $scope.addNode = function(node) {
+                var idTmp = Math.floor((Math.random() * 9999) + 1);
+                node.nodes.push({id : idTmp , title : "Nó "+idTmp, nodes : []});
+            }
+           $scope.adicionarNoFilho = function(index, tree) {
+                var idTmpNoFilho = Math.floor((Math.random() * 9999) + 1);
+                if(tree.nodes.length > 0) {
+                    $scope.adicionarNoFilho(index, tree.nodes[index]);
+                } else {
+                    tree.nodes.push({id : idTmpNoFilho,parent : tree.id, title : "Nó "+idTmpNoFilho, nodes : []});
+                }
+            }
+            $scope.removeNo = function(index) {
+                $scope.arvore[index].nodes.pop(index);
+            }
+            $scope.adicionarArvore = function() {
+                var idTmpArvore = Math.floor((Math.random() * 9999) + 1);
+                $scope.arvore.push({id : idTmpArvore, title : "Árvore "+idTmpArvore, nodes : []});
+            }
+            $scope.removeArvore = function(index) {
+                $scope.arvore.pop(index);
+                idArvore--;
+            }
+        }]);
+</script> 
+
+</html>
